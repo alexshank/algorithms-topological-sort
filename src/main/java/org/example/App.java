@@ -1,13 +1,14 @@
 package org.example;
 
 
-import com.mxgraph.layout.mxFastOrganicLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.util.mxCellRenderer;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -24,7 +25,7 @@ public class App {
         writeGraphToFile(createExampleGraph(), "example.png");
 
         // write random graph to output
-        writeGraphToFile(createRandomGraph(50, 50), "temp.png");
+        writeGraphToFile(createRandomGraph(15, 15), "temp.png");
     }
 
     // will not contain cycles
@@ -51,7 +52,14 @@ public class App {
             if (cd.detectCyclesContainingVertex(start)) g.removeEdge(start, end);
         }
 
-        System.out.println("Random graph has vertex count: " + g.vertexSet().size());
+        // TODO alex move out of here
+        TopologicalOrderIterator<String, DefaultEdge> iter = new TopologicalOrderIterator<String, DefaultEdge>(g);
+        while (iter.hasNext()) {
+            String v = iter.next();
+            System.out.print(v + " ");
+        }
+
+        System.out.println("\nRandom graph has vertex count: " + g.vertexSet().size());
         System.out.println("Random graph has edge count  : " + g.edgeSet().size());
         return g;
     }
@@ -91,7 +99,7 @@ public class App {
         // we don't need edge labels on our graph
         graphAdapter.getEdgeToCellMap().forEach((edge, cell) -> cell.setValue(null));
 
-        mxIGraphLayout layout = new mxFastOrganicLayout(graphAdapter);
+        mxIGraphLayout layout = new mxHierarchicalLayout(graphAdapter);
         layout.execute(graphAdapter.getDefaultParent());
 
         BufferedImage image = mxCellRenderer.createBufferedImage(
