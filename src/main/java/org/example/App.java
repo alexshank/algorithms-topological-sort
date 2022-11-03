@@ -1,9 +1,10 @@
 package org.example;
 
 
-import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.util.mxCellRenderer;
+import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -19,6 +20,49 @@ public class App {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting application...");
 
+        // write example graph to output
+        writeGraphToFile(createExampleGraph(), "example.png");
+
+        // write random graph to output
+        writeGraphToFile(createRandomGraph(50, 50), "temp.png");
+    }
+
+    // will not contain cycles
+    private static DefaultDirectedGraph<String, DefaultEdge> createRandomGraph(int vertices, int edges) {
+        // return null if we have more than a fully connected graph
+        if (edges > (((vertices - 1) * vertices) / 2)) return null;
+
+        DefaultDirectedGraph<String, DefaultEdge> g =
+                new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
+
+        for (int i = 0; i < vertices; i++) g.addVertex(createVertexLabel(i));
+
+
+        for (int i = 0; i < edges; i++) {
+
+            String start = createVertexLabel((int) (Math.random() * vertices));
+            String end = createVertexLabel((int) (Math.random() * vertices));
+            if (start.equals(end)) continue;
+
+            // TODO alex may error if same edge added twice?
+            g.addEdge(start, end);
+
+            CycleDetector cd = new CycleDetector(g);
+            if (cd.detectCyclesContainingVertex(start)) g.removeEdge(start, end);
+        }
+
+        System.out.println("Random graph has vertex count: " + g.vertexSet().size());
+        System.out.println("Random graph has edge count  : " + g.edgeSet().size());
+        return g;
+    }
+
+    private static String createVertexLabel(int i) {
+        if (i < 10) return "V0" + i;
+        else return "V" + i;
+    }
+
+    // just testing the JGraphT library functionality
+    private static DefaultDirectedGraph<String, DefaultEdge> createExampleGraph() {
         DefaultDirectedGraph<String, DefaultEdge> g =
                 new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 
@@ -34,17 +78,29 @@ public class App {
         g.addEdge(x2, x3);
         g.addEdge(x3, x1);
 
-        JGraphXAdapter<String, DefaultEdge> graphAdapter = new JGraphXAdapter<String, DefaultEdge>(g);
-        mxIGraphLayout layout = new mxCircleLayout(graphAdapter);
+        return g;
+    }
+
+    // write a PNG of the given graph to the given file in the "output" directory
+    private static void writeGraphToFile(
+            DefaultDirectedGraph<String, DefaultEdge> graph,
+            String fileName
+    ) throws IOException {
+        JGraphXAdapter<String, DefaultEdge> graphAdapter = new JGraphXAdapter<String, DefaultEdge>(graph);
+
+        // we don't need edge labels on our graph
+        graphAdapter.getEdgeToCellMap().forEach((edge, cell) -> cell.setValue(null));
+
+        mxIGraphLayout layout = new mxFastOrganicLayout(graphAdapter);
         layout.execute(graphAdapter.getDefaultParent());
 
         BufferedImage image = mxCellRenderer.createBufferedImage(
-                graphAdapter, null, 2, Color.WHITE, true, null
+                graphAdapter, null, 2, Color.BLACK, true, null
         );
 
-        System.out.println(Paths.get("").toAbsolutePath() + "/output");
-        new File(Paths.get("").toAbsolutePath() + "/output").mkdirs();
-        File imgFile = new File(Paths.get("").toAbsolutePath() + "/output/example.png");
+        String outputDirPath = Paths.get("").toAbsolutePath() + "/output/";
+        new File(outputDirPath).mkdirs();
+        File imgFile = new File(outputDirPath + fileName);
         imgFile.createNewFile();
         ImageIO.write(image, "PNG", imgFile);
     }
