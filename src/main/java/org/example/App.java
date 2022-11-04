@@ -4,6 +4,7 @@ package org.example;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.util.mxCellRenderer;
+import org.jgrapht.Graphs;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -16,6 +17,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 
 public class App {
     public static void main(String[] args) throws IOException {
@@ -25,7 +29,75 @@ public class App {
         writeGraphToFile(createExampleGraph(), "example.png");
 
         // write random graph to output
-        writeGraphToFile(createRandomGraph(15, 15), "temp.png");
+        DefaultDirectedGraph<String, DefaultEdge> randomGraph = createRandomGraph(15, 15);
+        writeGraphToFile(randomGraph, "temp.png");
+
+        // print libraries topological order
+        System.out.println("Library:");
+        TopologicalOrderIterator<String, DefaultEdge> iter = new TopologicalOrderIterator<String, DefaultEdge>(randomGraph);
+        while (iter.hasNext()) {
+            String v = iter.next();
+            System.out.print(v + " ");
+        }
+
+        // print my simple topological order
+        System.out.println();
+        System.out.println("Simple:");
+        mySimpleTopologicalSort(randomGraph);
+
+        // print my DFS based topological sort
+        System.out.println();
+        System.out.println("DFS:");
+        myDFSTopologicalSort(randomGraph);
+    }
+
+    private static void myDFSTopologicalSort(DefaultDirectedGraph<String, DefaultEdge> graph) {
+        Set<String> visited = new HashSet<>();
+        Stack<String> stack = new Stack<>();
+
+        graph.vertexSet().forEach(v -> {
+            if (!visited.contains(v)) topologicalSortVisit(graph, stack, visited, v);
+        });
+
+        while (stack.size() > 0) System.out.print(stack.pop() + " ");
+    }
+
+    private static void topologicalSortVisit(
+            DefaultDirectedGraph<String, DefaultEdge> graph,
+            Stack<String> stack,
+            Set<String> visited,
+            String v
+    ) {
+        System.out.print(v + ".");
+        visited.add(v);
+
+        // get neighbors of vertex
+        java.util.List<String> neighbors = Graphs.successorListOf(graph, v);
+        neighbors.forEach(neighbor -> {
+            if (!visited.contains(neighbor)) topologicalSortVisit(graph, stack, visited, neighbor);
+        });
+
+        stack.push(v);
+    }
+
+
+    private static void mySimpleTopologicalSort(DefaultDirectedGraph<String, DefaultEdge> graph) {
+        DefaultDirectedGraph<String, DefaultEdge> workingGraph = (DefaultDirectedGraph<String, DefaultEdge>) graph.clone();
+        while (!workingGraph.vertexSet().isEmpty()) {
+            String nextVertex = removeInDegreeZeroVertex(workingGraph); // has side effects
+            System.out.print(nextVertex + " ");
+        }
+    }
+
+    private static String removeInDegreeZeroVertex(DefaultDirectedGraph<String, DefaultEdge> workingGraph) {
+        String vertex = workingGraph.vertexSet().stream()
+                .filter(v -> workingGraph.incomingEdgesOf(v).size() == 0)
+                .findFirst()
+                .get();
+        Set<DefaultEdge> incomingEdges = workingGraph.incomingEdgesOf(vertex);
+        incomingEdges.forEach(edge -> workingGraph.removeEdge(edge));
+        workingGraph.removeVertex(vertex);
+        return vertex;
     }
 
     // will not contain cycles
@@ -50,13 +122,6 @@ public class App {
 
             CycleDetector cd = new CycleDetector(g);
             if (cd.detectCyclesContainingVertex(start)) g.removeEdge(start, end);
-        }
-
-        // TODO alex move out of here
-        TopologicalOrderIterator<String, DefaultEdge> iter = new TopologicalOrderIterator<String, DefaultEdge>(g);
-        while (iter.hasNext()) {
-            String v = iter.next();
-            System.out.print(v + " ");
         }
 
         System.out.println("\nRandom graph has vertex count: " + g.vertexSet().size());
