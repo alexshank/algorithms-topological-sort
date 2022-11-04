@@ -12,48 +12,94 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import javax.imageio.ImageIO;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
 public class App {
-    public static void main(String[] args) throws IOException {
-        System.out.println("Starting application...");
 
-        // write example graph to output
-        writeGraphToFile(createExampleGraph(), "example.png");
+    private static class RunRecord {
+        private String type;
+        private double timeCount; // seconds
+        private int vertexCount;
+        private int edgeCount;
+        private int actualVertexCount;
+        private int actualEdgeCount;
 
-        // write random graph to output
-        DefaultDirectedGraph<String, DefaultEdge> randomGraph = createRandomGraph(15, 15);
-        writeGraphToFile(randomGraph, "temp.png");
-
-        // print libraries topological order
-        System.out.println("Library:");
-        TopologicalOrderIterator<String, DefaultEdge> iter = new TopologicalOrderIterator<String, DefaultEdge>(randomGraph);
-        while (iter.hasNext()) {
-            String v = iter.next();
-            System.out.print(v + " ");
+        // TODO alex update so that vertex and edge count are actual values not attempted values
+        public RunRecord(String type, long timeCount, int vertexCount, int edgeCount, int actualVertexCount, int actualEdgeCount) {
+            this.type = type;
+            this.timeCount = (double) timeCount / 1_000_000_000;;
+            this.vertexCount = vertexCount;
+            this.edgeCount = edgeCount;
+            this.actualVertexCount = actualVertexCount;
+            this.actualEdgeCount = actualEdgeCount;
         }
 
-        // print my simple topological order
-        System.out.println();
-        System.out.println("Simple:");
-        mySimpleTopologicalSort(randomGraph);
-
-        // print my DFS based topological sort
-        System.out.println();
-        System.out.println("DFS:");
-        myDFSTopologicalSort(randomGraph);
+        // TODO alex add method that takes file pointer and prints record to it
     }
 
-    private static void myDFSTopologicalSort(DefaultDirectedGraph<String, DefaultEdge> graph) {
-        Set<String> visited = new HashSet<>();
-        Stack<String> stack = new Stack<>();
+    public static void main(String[] args) throws IOException {
+        System.out.println("Starting application...");
+        List<RunRecord> records = new ArrayList<>();
+
+//        // write example graph to output
+//        writeGraphToFile(createExampleGraph(), "example.png");
+
+        for (int i = 1000; i <= 10000000; i = i * 10) {
+            System.out.println("( i = " + i + " )");
+            // go to max number of possible edges in graph
+            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
+
+                // write random graph to output
+                DefaultDirectedGraph<Integer, DefaultEdge> randomGraph = createRandomGraph(i, j);
+                //        writeGraphToFile(randomGraph, "temp.png");
+                System.out.println("\t( j = " + j + " )");
+
+                // print libraries topological order
+                long start = System.nanoTime();
+                TopologicalOrderIterator<Integer, DefaultEdge> iter =
+                        new TopologicalOrderIterator<Integer, DefaultEdge>(randomGraph);
+                List<Integer> topologicalOrder = new ArrayList<>();
+                while (iter.hasNext()) {
+                    int v = iter.next();
+                    topologicalOrder.add(v);
+                }
+                long elapsedTime = System.nanoTime() - start;
+                records.add(new RunRecord("Library", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+
+                // print my simple topological order
+                start = System.nanoTime();
+                topologicalOrder = mySimpleTopologicalSort(randomGraph);
+                elapsedTime = System.nanoTime() - start;
+                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+
+                // print my DFS based topological sort
+                start = System.nanoTime();
+                topologicalOrder = myDFSTopologicalSort(randomGraph);
+                elapsedTime = System.nanoTime() - start;
+                records.add(new RunRecord("DFS   ", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+            }
+        }
+
+        // print all test results
+        System.out.println();
+        for (RunRecord record : records) {
+            System.out.println(record.type + "\t" + record.timeCount + "\t" + record.vertexCount + "\t" + record.actualVertexCount + "\t" + record.edgeCount + "\t" + record.actualEdgeCount);
+        }
+    }
+
+    private static List<Integer> myDFSTopologicalSort(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
+        Set<Integer> visited = new HashSet<>();
+        Stack<Integer> stack = new Stack<>();
 
         graph.vertexSet().forEach(v -> {
             if (!visited.contains(v)) {
@@ -61,41 +107,41 @@ public class App {
             }
         });
 
-        while (stack.size() > 0)
-            System.out.print(stack.pop() + " ");
+        List<Integer> result = new ArrayList<>();
+        while (stack.size() > 0) {
+            result.add(stack.pop());
+        }
+        return result;
     }
 
     private static void topologicalSortVisit(
-            DefaultDirectedGraph<String, DefaultEdge> graph,
-            Stack<String> stack,
-            Set<String> visited,
-            String v
+            DefaultDirectedGraph<Integer, DefaultEdge> graph,
+            Stack<Integer> stack,
+            Set<Integer> visited,
+            int v
     ) {
-        System.out.print(v + ".");
         visited.add(v);
-
-        // get neighbors of vertex
-        java.util.List<String> neighbors = Graphs.successorListOf(graph, v);
-        neighbors.forEach(neighbor -> {
-            if (!visited.contains(neighbor)) {
-                topologicalSortVisit(graph, stack, visited, neighbor);
+        Graphs.successorListOf(graph, v).forEach(child -> {
+            if (!visited.contains(child)) {
+                topologicalSortVisit(graph, stack, visited, child);
             }
         });
-
         stack.push(v);
     }
 
-
-    private static void mySimpleTopologicalSort(DefaultDirectedGraph<String, DefaultEdge> graph) {
-        DefaultDirectedGraph<String, DefaultEdge> workingGraph = (DefaultDirectedGraph<String, DefaultEdge>) graph.clone();
+    private static List<Integer> mySimpleTopologicalSort(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
+        DefaultDirectedGraph<Integer, DefaultEdge> workingGraph =
+                (DefaultDirectedGraph<Integer, DefaultEdge>) graph.clone();
+        List<Integer> result = new ArrayList<>();
         while (!workingGraph.vertexSet().isEmpty()) {
-            String nextVertex = removeInDegreeZeroVertex(workingGraph); // has side effects
-            System.out.print(nextVertex + " ");
+            Integer nextVertex = removeInDegreeZeroVertex(workingGraph); // has side effects
+            result.add(nextVertex);
         }
+        return result;
     }
 
-    private static String removeInDegreeZeroVertex(DefaultDirectedGraph<String, DefaultEdge> workingGraph) {
-        String vertex = workingGraph.vertexSet().stream()
+    private static int removeInDegreeZeroVertex(DefaultDirectedGraph<Integer, DefaultEdge> workingGraph) {
+        int vertex = workingGraph.vertexSet().stream()
                 .filter(v -> workingGraph.incomingEdgesOf(v).size() == 0)
                 .findFirst()
                 .get();
@@ -106,29 +152,26 @@ public class App {
     }
 
     // will not contain cycles
-    private static DefaultDirectedGraph<String, DefaultEdge> createRandomGraph(int vertices, int edges) {
+    private static DefaultDirectedGraph<Integer, DefaultEdge> createRandomGraph(int vertices, int edges) {
         // return null if we have more than a fully connected graph
         if (edges > (((vertices - 1) * vertices) / 2)) {
             return null;
         }
 
-        DefaultDirectedGraph<String, DefaultEdge> g =
-                new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
+        DefaultDirectedGraph<Integer, DefaultEdge> g =
+                new DefaultDirectedGraph<Integer, DefaultEdge>(DefaultEdge.class);
 
         for (int i = 0; i < vertices; i++) {
-            g.addVertex(createVertexLabel(i));
+            g.addVertex(i);
         }
 
-
         for (int i = 0; i < edges; i++) {
-
-            String start = createVertexLabel((int) (Math.random() * vertices));
-            String end = createVertexLabel((int) (Math.random() * vertices));
-            if (start.equals(end)) {
-                continue;
+            int start = (int) (Math.random() * vertices);
+            int end = (int) (Math.random() * vertices);
+            if (start == end) {
+                break;  // TODO maybe improve? once we start making cycles, exit
             }
 
-            // TODO alex may error if same edge added twice?
             g.addEdge(start, end);
 
             CycleDetector cd = new CycleDetector(g);
@@ -136,36 +179,6 @@ public class App {
                 g.removeEdge(start, end);
             }
         }
-
-        System.out.println("\nRandom graph has vertex count: " + g.vertexSet().size());
-        System.out.println("Random graph has edge count  : " + g.edgeSet().size());
-        return g;
-    }
-
-    private static String createVertexLabel(int i) {
-        if (i < 10) {
-            return "V0" + i;
-        } else {
-            return "V" + i;
-        }
-    }
-
-    // just testing the JGraphT library functionality
-    private static DefaultDirectedGraph<String, DefaultEdge> createExampleGraph() {
-        DefaultDirectedGraph<String, DefaultEdge> g =
-                new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
-
-        String x1 = "x1";
-        String x2 = "x2";
-        String x3 = "x3";
-
-        g.addVertex(x1);
-        g.addVertex(x2);
-        g.addVertex(x3);
-
-        g.addEdge(x1, x2);
-        g.addEdge(x2, x3);
-        g.addEdge(x3, x1);
 
         return g;
     }
