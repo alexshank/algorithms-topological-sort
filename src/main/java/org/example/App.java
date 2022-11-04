@@ -56,10 +56,13 @@ public class App {
         Stack<String> stack = new Stack<>();
 
         graph.vertexSet().forEach(v -> {
-            if (!visited.contains(v)) topologicalSortVisit(graph, stack, visited, v);
+            if (!visited.contains(v)) {
+                topologicalSortVisit(graph, stack, visited, v);
+            }
         });
 
-        while (stack.size() > 0) System.out.print(stack.pop() + " ");
+        while (stack.size() > 0)
+            System.out.print(stack.pop() + " ");
     }
 
     private static void topologicalSortVisit(
@@ -74,7 +77,9 @@ public class App {
         // get neighbors of vertex
         java.util.List<String> neighbors = Graphs.successorListOf(graph, v);
         neighbors.forEach(neighbor -> {
-            if (!visited.contains(neighbor)) topologicalSortVisit(graph, stack, visited, neighbor);
+            if (!visited.contains(neighbor)) {
+                topologicalSortVisit(graph, stack, visited, neighbor);
+            }
         });
 
         stack.push(v);
@@ -103,25 +108,33 @@ public class App {
     // will not contain cycles
     private static DefaultDirectedGraph<String, DefaultEdge> createRandomGraph(int vertices, int edges) {
         // return null if we have more than a fully connected graph
-        if (edges > (((vertices - 1) * vertices) / 2)) return null;
+        if (edges > (((vertices - 1) * vertices) / 2)) {
+            return null;
+        }
 
         DefaultDirectedGraph<String, DefaultEdge> g =
                 new DefaultDirectedGraph<String, DefaultEdge>(DefaultEdge.class);
 
-        for (int i = 0; i < vertices; i++) g.addVertex(createVertexLabel(i));
+        for (int i = 0; i < vertices; i++) {
+            g.addVertex(createVertexLabel(i));
+        }
 
 
         for (int i = 0; i < edges; i++) {
 
             String start = createVertexLabel((int) (Math.random() * vertices));
             String end = createVertexLabel((int) (Math.random() * vertices));
-            if (start.equals(end)) continue;
+            if (start.equals(end)) {
+                continue;
+            }
 
             // TODO alex may error if same edge added twice?
             g.addEdge(start, end);
 
             CycleDetector cd = new CycleDetector(g);
-            if (cd.detectCyclesContainingVertex(start)) g.removeEdge(start, end);
+            if (cd.detectCyclesContainingVertex(start)) {
+                g.removeEdge(start, end);
+            }
         }
 
         System.out.println("\nRandom graph has vertex count: " + g.vertexSet().size());
@@ -130,8 +143,11 @@ public class App {
     }
 
     private static String createVertexLabel(int i) {
-        if (i < 10) return "V0" + i;
-        else return "V" + i;
+        if (i < 10) {
+            return "V0" + i;
+        } else {
+            return "V" + i;
+        }
     }
 
     // just testing the JGraphT library functionality
