@@ -37,7 +37,7 @@ public class App {
         // TODO alex update so that vertex and edge count are actual values not attempted values
         public RunRecord(String type, long timeCount, int vertexCount, int edgeCount, int actualVertexCount, int actualEdgeCount) {
             this.type = type;
-            this.timeCount = (double) timeCount / 1_000_000_000;;
+            this.timeCount = (double) timeCount / 1_000_000_000;
             this.vertexCount = vertexCount;
             this.edgeCount = edgeCount;
             this.actualVertexCount = actualVertexCount;
@@ -54,16 +54,20 @@ public class App {
 //        // write example graph to output
 //        writeGraphToFile(createExampleGraph(), "example.png");
 
-        for (int i = 1000; i <= 10000000; i = i * 10) {
+        for (int i = 1000; i <= 1_000_000; i = i * 10) {
             System.out.println("( i = " + i + " )");
             // go to max number of possible edges in graph
-            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
+//            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
+            // TODO alex this is taking too long right now
 
-                // write random graph to output
-                DefaultDirectedGraph<Integer, DefaultEdge> randomGraph = createRandomGraph(i, j);
-                //        writeGraphToFile(randomGraph, "temp.png");
+            for (int j = 10; j <= i; j = j * 10) {
+
                 System.out.println("\t( j = " + j + " )");
+                DefaultDirectedGraph<Integer, DefaultEdge> randomGraph = createRandomGraph(i, j);
+                // write random graph to output
+                //        writeGraphToFile(randomGraph, "temp.png");
 
+                System.out.println("\tLibrary");
                 // print libraries topological order
                 long start = System.nanoTime();
                 TopologicalOrderIterator<Integer, DefaultEdge> iter =
@@ -74,26 +78,34 @@ public class App {
                     topologicalOrder.add(v);
                 }
                 long elapsedTime = System.nanoTime() - start;
+                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
                 records.add(new RunRecord("Library", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
 
-                // print my simple topological order
-                start = System.nanoTime();
-                topologicalOrder = mySimpleTopologicalSort(randomGraph);
-                elapsedTime = System.nanoTime() - start;
-                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
-
+                System.out.println("\tDFS");
                 // print my DFS based topological sort
                 start = System.nanoTime();
                 topologicalOrder = myDFSTopologicalSort(randomGraph);
                 elapsedTime = System.nanoTime() - start;
+                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
                 records.add(new RunRecord("DFS   ", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+
+                // TODO alex fix once other analysis is good.
+                // TODO alex we can try a very similar, but modified, algorithm
+//                System.out.println("\tSimple");
+//                // print my simple topological order
+//                start = System.nanoTime();
+//                topologicalOrder = mySimpleTopologicalSort(randomGraph);
+//                elapsedTime = System.nanoTime() - start;
+//                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
+//                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
             }
         }
 
         // print all test results
         System.out.println();
         for (RunRecord record : records) {
-            System.out.println(record.type + "\t" + record.timeCount + "\t" + record.vertexCount + "\t" + record.actualVertexCount + "\t" + record.edgeCount + "\t" + record.actualEdgeCount);
+            System.out.println("type, timeCount, vertexCount, actualVertexCount, edgeCount, actualEdgeCount");
+            System.out.println(record.type + ", " + record.timeCount + ", " + record.vertexCount + ", " + record.actualVertexCount + ", " + record.edgeCount + ", " + record.actualEdgeCount);
         }
     }
 
@@ -129,32 +141,41 @@ public class App {
         stack.push(v);
     }
 
+    // TODO alex rewrite this with alternative approach described in bookmarks
     private static List<Integer> mySimpleTopologicalSort(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
-        DefaultDirectedGraph<Integer, DefaultEdge> workingGraph =
-                (DefaultDirectedGraph<Integer, DefaultEdge>) graph.clone();
+        // TODO alex uhhh don't copy graph but this isn't great
+//        DefaultDirectedGraph<Integer, DefaultEdge> workingGraph =
+//                (DefaultDirectedGraph<Integer, DefaultEdge>) graph.clone();
+
+
+        System.out.print("\t\tremoving zero degree vertex... v count = ");
         List<Integer> result = new ArrayList<>();
-        while (!workingGraph.vertexSet().isEmpty()) {
-            Integer nextVertex = removeInDegreeZeroVertex(workingGraph); // has side effects
-            result.add(nextVertex);
+        while (!graph.vertexSet().isEmpty()) {
+            if (graph.vertexSet().size() % 100_000 == 0) {
+                System.out.print(graph.vertexSet().size() + ", ");
+            }
+
+            for (int j : graph.vertexSet()) {
+                if (graph.outDegreeOf(j) == 0) {
+                    graph.removeVertex(j);
+                    result.add(j);
+                    break;
+                }
+            }
         }
+        System.out.println();
         return result;
     }
 
-    private static int removeInDegreeZeroVertex(DefaultDirectedGraph<Integer, DefaultEdge> workingGraph) {
-        int vertex = workingGraph.vertexSet().stream()
-                .filter(v -> workingGraph.incomingEdgesOf(v).size() == 0)
-                .findFirst()
-                .get();
-        Set<DefaultEdge> incomingEdges = workingGraph.incomingEdgesOf(vertex);
-        incomingEdges.forEach(edge -> workingGraph.removeEdge(edge));
-        workingGraph.removeVertex(vertex);
-        return vertex;
-    }
-
+    // TODO alex this doesn't seem to be a bottleneck, but we know we want to end up with a
+    // TODO alex DAG. We could get a DAG in a more direct/efficient way
+    // TODO alex
+    // TODO alex We should maybe still use this way and note when we create 1 or more cycles
+    // TODO alex Ultimately, our algorithms should be able to detect a cycle without issue
     // will not contain cycles
     private static DefaultDirectedGraph<Integer, DefaultEdge> createRandomGraph(int vertices, int edges) {
         // return null if we have more than a fully connected graph
-        if (edges > (((vertices - 1) * vertices) / 2)) {
+        if ((long) edges > (((((long) vertices - 1) * (long) vertices) / 2))) {
             return null;
         }
 
@@ -169,7 +190,7 @@ public class App {
             int start = (int) (Math.random() * vertices);
             int end = (int) (Math.random() * vertices);
             if (start == end) {
-                break;  // TODO maybe improve? once we start making cycles, exit
+                continue;  // TODO maybe improve? once we start making cycles, exit
             }
 
             g.addEdge(start, end);
