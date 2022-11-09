@@ -1,31 +1,45 @@
 import matplotlib.pyplot as plt
 import csv
 
-time = []
-vertices = []
-edges = []
+def timeAndVertices(data, case, edges):
+    filtered = [row for row in data if row[0] == case]
+    filtered_edges = [row for row in filtered if row[4] == str(edges)]
+    filtered_edges_time = [row[1] for row in filtered_edges]
+    filtered_edges_vertices = [row[3] for row in filtered_edges]
+    return filtered_edges_vertices, filtered_edges_time
 
-with open('output/data.csv','r') as csvfile:
-    plots = csv.reader(csvfile, delimiter = ',')
+if __name__ == "__main__":
 
-    library = [row for row in plots if row[0] == 'Library' and row[3] == '100000']
-    dfs = [row for row in plots if row[0] == 'DFS']
+    data = None
+    with open('output/data.csv','r') as csvfile:
+        data = csv.reader(csvfile, delimiter = ',')
+        data = list(data)
 
-    for row in library:
-        print(row)
-        time.append(row[1])
-        vertices.append(int(row[4]))
-        edges.append(int(row[5]))
+    library_e10_vertices, library_e10_times = timeAndVertices(data, 'Library', 10)
+    library_e100_vertices, library_e100_times = timeAndVertices(data, 'Library', 100)
+    library_e1000_vertices, library_e1000_times = timeAndVertices(data, 'Library', 1000)
+    library_e10000_vertices, library_e10000_times = timeAndVertices(data, 'Library', 10000)
 
+    fig, axs = plt.subplots(2, 2)
+    axs[0, 0].plot(library_e10_vertices, library_e10_times, '--bo')
+    axs[0, 0].set_title('Edges = 10')
+    axs[0, 1].plot(library_e100_vertices, library_e100_times, '--bo')
+    axs[0, 1].set_title('Edges = 100')
+    axs[1, 0].plot(library_e1000_vertices, library_e1000_times, '--bo')
+    axs[1, 0].set_title('Edges = 1,000')
+    axs[1, 1].plot(library_e10000_vertices, library_e10000_times, '--bo')
+    axs[1, 1].set_title('Edges = 10,000')
 
-# for row in dfs:
-    #     print(row)
-    #     x.append(row[0])
-    #     y.append(int(row[2]))
+    for ax in axs.flat:
+        ax.set(xlabel='x-label', ylabel='y-label')
 
-plt.plot(vertices, time, color = 'g')
-plt.xlabel('Edges')
-plt.ylabel('Seconds')
-plt.title('Library with Varying Edges (v = ~100,000)')
-plt.legend()
-plt.show()
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+        ax.label_outer()
+
+    # plt.plot(vertices, time, color = 'g')
+    # plt.xlabel('Edges')
+    # plt.ylabel('Seconds')
+    # plt.title('Library with Varying Edges (v = ~100,000)')
+    # plt.legend()
+    plt.show()
