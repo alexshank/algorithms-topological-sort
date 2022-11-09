@@ -15,7 +15,9 @@ import javax.imageio.ImageIO;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+// TODO alex add readme
+// TODO alex add finalized report to repo at end
 public class App {
 
     private static class RunRecord {
@@ -45,6 +49,11 @@ public class App {
         }
 
         // TODO alex add method that takes file pointer and prints record to it
+
+        @Override
+        public String toString(){
+            return this.type + "," + this.timeCount + "," + this.vertexCount + "," + this.actualVertexCount + "," + this.edgeCount + "," + this.actualEdgeCount;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -54,7 +63,7 @@ public class App {
 //        // write example graph to output
 //        writeGraphToFile(createExampleGraph(), "example.png");
 
-        for (int i = 1000; i <= 1_000_000; i = i * 10) {
+        for (int i = 1000; i <= 100_000; i = i * 10) {
             System.out.println("( i = " + i + " )");
             // go to max number of possible edges in graph
 //            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
@@ -67,7 +76,6 @@ public class App {
                 // write random graph to output
                 //        writeGraphToFile(randomGraph, "temp.png");
 
-                System.out.println("\tLibrary");
                 // print libraries topological order
                 long start = System.nanoTime();
                 TopologicalOrderIterator<Integer, DefaultEdge> iter =
@@ -78,35 +86,35 @@ public class App {
                     topologicalOrder.add(v);
                 }
                 long elapsedTime = System.nanoTime() - start;
-                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
+                System.out.println("\tLibrary " + (double) elapsedTime / 1_000_000_000);
                 records.add(new RunRecord("Library", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
 
-                System.out.println("\tDFS");
                 // print my DFS based topological sort
                 start = System.nanoTime();
                 topologicalOrder = myDFSTopologicalSort(randomGraph);
                 elapsedTime = System.nanoTime() - start;
-                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
-                records.add(new RunRecord("DFS   ", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+                System.out.println("\tDFS " + (double) elapsedTime / 1_000_000_000);
+                records.add(new RunRecord("DFS", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
 
                 // TODO alex fix once other analysis is good.
                 // TODO alex we can try a very similar, but modified, algorithm
-//                System.out.println("\tSimple");
 //                // print my simple topological order
 //                start = System.nanoTime();
 //                topologicalOrder = mySimpleTopologicalSort(randomGraph);
 //                elapsedTime = System.nanoTime() - start;
-//                System.out.println("\t" + (double) elapsedTime / 1_000_000_000);
-//                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+//                System.out.println("\tSimple" + (double) elapsedTime / 1_000_000_000);
+//                records.add(new RunRecord("Simple ", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
             }
         }
 
         // print all test results
         System.out.println();
+        System.out.println("type, timeCount, vertexCount, actualVertexCount, edgeCount, actualEdgeCount");
         for (RunRecord record : records) {
-            System.out.println("type, timeCount, vertexCount, actualVertexCount, edgeCount, actualEdgeCount");
-            System.out.println(record.type + ", " + record.timeCount + ", " + record.vertexCount + ", " + record.actualVertexCount + ", " + record.edgeCount + ", " + record.actualEdgeCount);
+            System.out.println(record.toString());
         }
+
+        writeCSVToFile(records, "data.csv");
     }
 
     private static List<Integer> myDFSTopologicalSort(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
@@ -204,6 +212,7 @@ public class App {
         return g;
     }
 
+    // TODO alex add appendix with some examples of small graphs that are properly topologically sorted
     // write a PNG of the given graph to the given file in the "output" directory
     private static void writeGraphToFile(
             DefaultDirectedGraph<String, DefaultEdge> graph,
@@ -226,5 +235,25 @@ public class App {
         File imgFile = new File(outputDirPath + fileName);
         imgFile.createNewFile();
         ImageIO.write(image, "PNG", imgFile);
+    }
+
+    // write a CSV of runtimes to the given file in the "output" directory
+    private static void writeCSVToFile(
+            List<RunRecord> runRecords,
+            String fileName
+    ) throws IOException {
+
+        String outputDirPath = Paths.get("").toAbsolutePath() + "/output/";
+        new File(outputDirPath).mkdirs();
+        File csvFile = new File(outputDirPath + fileName); // TODO alex may not be needed?
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outputDirPath + fileName));
+        writer.write("type,timeCount,vertexCount,actualVertexCount,edgeCount,actualEdgeCount\n");
+        for(RunRecord r : runRecords){
+            writer.write(r.toString() + "\n");
+        }
+
+
+        writer.close();
     }
 }
