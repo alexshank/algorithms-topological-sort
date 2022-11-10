@@ -52,7 +52,7 @@ public class App {
         // TODO alex add method that takes file pointer and prints record to it
 
         @Override
-        public String toString(){
+        public String toString() {
             return this.type + "," + this.timeCount + "," + this.vertexCount + "," + this.actualVertexCount + "," + this.edgeCount + "," + this.actualEdgeCount;
         }
     }
@@ -190,27 +190,27 @@ public class App {
         graph.vertexSet().forEach(v -> {
             int inDegree = graph.inDegreeOf(v);
             inDegrees[v.intValue()] = inDegree;
-            if(inDegree == 0){
+            if (inDegree == 0) {
                 queue.add(v);
             }
         });
 
         List<Long> result = new ArrayList<>();
-        while(!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             long vertex = queue.remove();
             result.add(vertex);
             visitedCount++;
             graph.outgoingEdgesOf(vertex);
             Graphs.successorListOf(graph, vertex).forEach(v -> {
                 inDegrees[v.intValue()]--;
-                if(inDegrees[v.intValue()] == 0){
+                if (inDegrees[v.intValue()] == 0) {
                     queue.add(v);
                 }
             });
         }
 
         // TODO alex otherwise we have a cycle
-        assert(visitedCount == graph.vertexSet().size());
+        assert (visitedCount == graph.vertexSet().size());
         return result;
     }
 
@@ -229,13 +229,13 @@ public class App {
         }
 
         long count = 0;
-        while(count < edges){
+        while (count < edges) {
             long start = (long) (Math.random() * vertices);
             long end = (long) (Math.random() * vertices);
 
-            if(g.containsEdge(start, end)){
+            if (g.containsEdge(start, end)) {
                 continue;
-            }else{
+            } else {
                 g.addEdge(start, end);
                 count++;
             }
@@ -259,30 +259,30 @@ public class App {
         }
 
         // if we want a nearly "full" graph, randomly remove edges rather than randomly add them
-        if((long) edges > 3 * maxEdges / 4){
+        if ((long) edges > 3 * maxEdges / 4) {
             // add every possible edge
-            for(long i = vertices - 1; i > 0; i--){
-                for(long j = i - 1; j >= 0; j--){
+            for (long i = vertices - 1; i > 0; i--) {
+                for (long j = i - 1; j >= 0; j--) {
                     dag.addEdge(i, j);
                 }
             }
 
             long count = maxEdges;
-            while(count > edges){
+            while (count > edges) {
                 long start = (long) (Math.random() * vertices);
                 long end = (long) (Math.random() * (start - 1));
-                if(dag.removeEdge(start, end) != null){
+                if (dag.removeEdge(start, end) != null) {
                     count--;
                 }
             }
-        }else{
+        } else {
             long count = 0;
-            while(count < edges){
+            while (count < edges) {
                 long start = (long) (Math.random() * vertices);
                 long end = (long) (Math.random() * (start - 1));
-                if(start == end || dag.containsEdge(start, end)){
+                if (start == end || dag.containsEdge(start, end)) {
                     continue;
-                }else{
+                } else {
                     dag.addEdge(start, end);
                     count++;
                 }
@@ -329,7 +329,7 @@ public class App {
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputDirPath + fileName));
         writer.write("type,timeCount,vertexCount,actualVertexCount,edgeCount,actualEdgeCount\n");
-        for(RunRecord r : runRecords){
+        for (RunRecord r : runRecords) {
             writer.write(r.toString() + "\n");
         }
 
