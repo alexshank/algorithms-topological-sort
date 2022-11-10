@@ -23,6 +23,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -32,7 +34,7 @@ public class App {
 
     private static class RunRecord {
         private String type;
-        private double timeCount; // seconds
+        private long timeCount; // milliseconds
         private int vertexCount;
         private int edgeCount;
         private int actualVertexCount;
@@ -41,7 +43,7 @@ public class App {
         // TODO alex update so that vertex and edge count are actual values not attempted values
         public RunRecord(String type, long timeCount, int vertexCount, int edgeCount, int actualVertexCount, int actualEdgeCount) {
             this.type = type;
-            this.timeCount = (double) timeCount / 1_000_000_000;
+            this.timeCount = timeCount / 1_000_000;
             this.vertexCount = vertexCount;
             this.edgeCount = edgeCount;
             this.actualVertexCount = actualVertexCount;
@@ -63,7 +65,7 @@ public class App {
 //        // write example graph to output
 //        writeGraphToFile(createExampleGraph(), "example.png");
 
-        for (int i = 1000; i <= 100_000; i = i * 10) {
+        for (int i = 1000; i <= 10_000_000; i = i * 10) {
             System.out.println("( i = " + i + " )");
             // go to max number of possible edges in graph
 //            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
@@ -86,24 +88,24 @@ public class App {
                     topologicalOrder.add(v);
                 }
                 long elapsedTime = System.nanoTime() - start;
-                System.out.println("\tLibrary " + (double) elapsedTime / 1_000_000_000);
+                System.out.println("\tLibrary " + elapsedTime / 1_000_000);
                 records.add(new RunRecord("Library", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
 
                 // print my DFS based topological sort
                 start = System.nanoTime();
                 topologicalOrder = myDFSTopologicalSort(randomGraph);
                 elapsedTime = System.nanoTime() - start;
-                System.out.println("\tDFS " + (double) elapsedTime / 1_000_000_000);
+                System.out.println("\tDFS " + elapsedTime / 1_000_000);
                 records.add(new RunRecord("DFS", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
 
                 // TODO alex fix once other analysis is good.
                 // TODO alex we can try a very similar, but modified, algorithm
-//                // print my simple topological order
-//                start = System.nanoTime();
-//                topologicalOrder = mySimpleTopologicalSort(randomGraph);
-//                elapsedTime = System.nanoTime() - start;
-//                System.out.println("\tSimple" + (double) elapsedTime / 1_000_000_000);
-//                records.add(new RunRecord("Simple ", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+                // print my simple topological order
+                start = System.nanoTime();
+                topologicalOrder = mySecondSimpleTopologicalSort(randomGraph);
+                elapsedTime = System.nanoTime() - start;
+                System.out.println("\tSimple " + elapsedTime / 1_000_000);
+                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
             }
         }
 
@@ -172,6 +174,41 @@ public class App {
             }
         }
         System.out.println();
+        return result;
+    }
+
+    private static List<Integer> mySecondSimpleTopologicalSort(DefaultDirectedGraph<Integer, DefaultEdge> graph) {
+
+        Queue<Integer> queue = new PriorityQueue<>();
+        int visitedCount = 0;
+
+        int[] inDegrees = new int[graph.vertexSet().size()];
+        graph.vertexSet().forEach(v -> {
+            int inDegree = graph.inDegreeOf(v);
+            inDegrees[v] = inDegree;
+            if(inDegree == 0){
+                queue.add(v);
+            }
+        });
+
+
+        List<Integer> result = new ArrayList<>();
+
+        while(!queue.isEmpty()){
+            int vertex = queue.remove();
+            result.add(vertex);
+            visitedCount++;
+            graph.outgoingEdgesOf(vertex);
+            Graphs.successorListOf(graph, vertex).forEach(v -> {
+                inDegrees[v]--;
+                if(inDegrees[v] == 0){
+                    queue.add(v);
+                }
+            });
+        }
+
+        // TODO alex otherwise we have a cycle
+        assert(visitedCount == graph.vertexSet().size());
         return result;
     }
 
@@ -245,14 +282,13 @@ public class App {
 
         String outputDirPath = Paths.get("").toAbsolutePath() + "/output/";
         new File(outputDirPath).mkdirs();
-        File csvFile = new File(outputDirPath + fileName); // TODO alex may not be needed?
+//        File csvFile = new File(outputDirPath + fileName); // TODO alex may not be needed?
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputDirPath + fileName));
         writer.write("type,timeCount,vertexCount,actualVertexCount,edgeCount,actualEdgeCount\n");
         for(RunRecord r : runRecords){
             writer.write(r.toString() + "\n");
         }
-
 
         writer.close();
     }
