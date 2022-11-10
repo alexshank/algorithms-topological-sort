@@ -27,6 +27,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+// TODO alex space complexity of each of these?
+
 // TODO alex add readme
 // TODO alex add finalized report to repo at end
 public class App {
@@ -61,22 +63,42 @@ public class App {
         System.out.println("Starting application...");
         List<RunRecord> records = new ArrayList<>();
 
-//        DefaultDirectedGraph<Long, DefaultEdge> testGraph = createDirectedAcyclicGraph(20, 30);
+        // TODO alex testing limits one time
+//        DefaultDirectedGraph<Long, DefaultEdge> testGraph = createDirectedAcyclicGraph(1_000_000, (1_000_000 * (1_000_000 - 1))/2);
+//
+//        long start = System.nanoTime();
+//        TopologicalOrderIterator<Long, DefaultEdge> iter =
+//                new TopologicalOrderIterator<Long, DefaultEdge>(testGraph);
+//        List<Long> topologicalOrder = new ArrayList<>();
+//        while (iter.hasNext()) {
+//            long v = iter.next();
+//            topologicalOrder.add(v);
+//        }
+//        long elapsedTime = System.nanoTime() - start;
+//        System.out.println("\tLibrary " + elapsedTime / 1_000_000);
+
+        // TODO alex testing cycles aren't created, printing small graph to visually confirm
 //        TopologicalOrderIterator<Long, DefaultEdge> iter =
 //                        new TopologicalOrderIterator<Long, DefaultEdge>(testGraph);
 ////         write random graph to output
 //        writeGraphToFile(testGraph, "temp.png");
 
-        for (long i = 10_000; i <= 1_000_000; i = i + 70_000) {
+        // TODO alex add trivial cases of zero edges to maybe 100
+
+        // TODO alex create one case where we do all the edges up to 10,000 vertices
+
+        for (long i = 10; i <= 10_000; i = Double.valueOf(i * 1.1).longValue()) {
             System.out.println("i = " + i);
             // go to max number of possible edges in graph
 //            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
             // TODO alex this is taking too long right now
-
+            System.out.println("Vertices: " + i + " out of " + 10_000);
+            System.out.println("Going up to " + ((i - 1) * i) / 2 + " edges...");
             System.out.print("\tj = ");
-            for (long j = 0; j <= i; j = j + 50_000) {
+            for (long j = 10; j<= ((i - 1) * i) / 2; j = Double.valueOf(j * 1.1).longValue()) {
 
                 System.out.print(j + ", ");
+
                 DefaultDirectedGraph<Long, DefaultEdge> randomGraph = createDirectedAcyclicGraph(i, j);
                 // write random graph to output
                 //        writeGraphToFile(randomGraph, "temp.png");
@@ -121,7 +143,7 @@ public class App {
             System.out.println(record.toString());
         }
 
-        writeCSVToFile(records, "data.csv");
+        writeCSVToFile(records, "many_edges_data.csv");
     }
 
     private static List<Long> myDFSTopologicalSort(DefaultDirectedGraph<Long, DefaultEdge> graph) {
@@ -244,6 +266,7 @@ public class App {
         return g;
     }
 
+    // TODO alex we could re-use the test graphs we created and just add / remove the difference of needed edges
     // will not contain cycles
     // all edges must go from a higher vertex to a lower vertex
     private static DefaultDirectedGraph<Long, DefaultEdge> createDirectedAcyclicGraph(long vertices, long edges) throws Exception {

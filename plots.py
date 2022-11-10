@@ -25,7 +25,7 @@ def time_and_sum(local_data, case):
 if __name__ == "__main__":
 
     data = None
-    with open('output/data.csv','r') as csvfile:
+    with open('output/data_save.csv', 'r') as csvfile:
         data = csv.reader(csvfile, delimiter = ',')
         data = list(data)
 
