@@ -85,21 +85,26 @@ public class App {
 
         // TODO alex add trivial cases of zero edges to maybe 100
 
-        // TODO alex create one case where we do all the edges up to 10,000 vertices
+        // TODO alex create one case where we do all the edges up to 10,000? vertices
 
-        for (long i = 10; i <= 10_000; i = Double.valueOf(i * 1.1).longValue()) {
+        DefaultDirectedGraph<Long, DefaultEdge> dag =
+                new DefaultDirectedGraph<Long, DefaultEdge>(DefaultEdge.class);
+        for (long i = 10; i <= 5_000; i = Double.valueOf(i * 1.1).longValue()) {
             System.out.println("i = " + i);
             // go to max number of possible edges in graph
 //            for (int j = 10; j <= ((i - 1) * i) / 2; j = j * 10){
             // TODO alex this is taking too long right now
-            System.out.println("Vertices: " + i + " out of " + 10_000);
+            System.out.println("Vertices: " + i + " out of " + 5_000);
             System.out.println("Going up to " + ((i - 1) * i) / 2 + " edges...");
             System.out.print("\tj = ");
+            long printCounter = 0;
             for (long j = 10; j<= ((i - 1) * i) / 2; j = Double.valueOf(j * 1.1).longValue()) {
+                printCounter++;
+                if(printCounter % 100 == 0){
+                    System.out.print(j + " of " + ((i - 1) * i) / 2 + ", ");
+                }
 
-                System.out.print(j + ", ");
-
-                DefaultDirectedGraph<Long, DefaultEdge> randomGraph = createDirectedAcyclicGraph(i, j);
+                createDirectedAcyclicGraph(dag, i, j);
                 // write random graph to output
                 //        writeGraphToFile(randomGraph, "temp.png");
 
@@ -107,7 +112,7 @@ public class App {
                 // print libraries topological order
                 long start = System.nanoTime();
                 TopologicalOrderIterator<Long, DefaultEdge> iter =
-                        new TopologicalOrderIterator<Long, DefaultEdge>(randomGraph);
+                        new TopologicalOrderIterator<Long, DefaultEdge>(dag);
                 List<Long> topologicalOrder = new ArrayList<>();
                 while (iter.hasNext()) {
                     long v = iter.next();
@@ -115,23 +120,23 @@ public class App {
                 }
                 long elapsedTime = System.nanoTime() - start;
 //                System.out.println("\tLibrary " + elapsedTime / 1_000_000);
-                records.add(new RunRecord("Library", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+                records.add(new RunRecord("Library", elapsedTime, i, j, dag.vertexSet().size(), dag.edgeSet().size()));
 
                 // print my DFS based topological sort
                 start = System.nanoTime();
-                topologicalOrder = myDFSTopologicalSort(randomGraph);
+                topologicalOrder = myDFSTopologicalSort(dag);
                 elapsedTime = System.nanoTime() - start;
 //                System.out.println("\tDFS " + elapsedTime / 1_000_000);
-                records.add(new RunRecord("DFS", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+                records.add(new RunRecord("DFS", elapsedTime, i, j, dag.vertexSet().size(), dag.edgeSet().size()));
 
                 // TODO alex fix once other analysis is good.
                 // TODO alex we can try a very similar, but modified, algorithm
                 // print my simple topological order
                 start = System.nanoTime();
-                topologicalOrder = mySecondSimpleTopologicalSort(randomGraph);
+                topologicalOrder = mySecondSimpleTopologicalSort(dag);
                 elapsedTime = System.nanoTime() - start;
 //                System.out.println("\tSimple " + elapsedTime / 1_000_000);
-                records.add(new RunRecord("Simple", elapsedTime, i, j, randomGraph.vertexSet().size(), randomGraph.edgeSet().size()));
+                records.add(new RunRecord("Simple", elapsedTime, i, j, dag.vertexSet().size(), dag.edgeSet().size()));
             }
             System.out.println();
         }
@@ -269,50 +274,48 @@ public class App {
     // TODO alex we could re-use the test graphs we created and just add / remove the difference of needed edges
     // will not contain cycles
     // all edges must go from a higher vertex to a lower vertex
-    private static DefaultDirectedGraph<Long, DefaultEdge> createDirectedAcyclicGraph(long vertices, long edges) throws Exception {
+    private static void createDirectedAcyclicGraph(
+            DefaultDirectedGraph<Long, DefaultEdge> dag,
+            long vertices,
+            long edges
+    ) throws Exception {
         // throw exception if we have more edges than a DAG could hold (i.e. cycle producing)
         long maxEdges = ((vertices - 1) * vertices) / 2;
         if (edges > maxEdges) {
             throw new Exception("Too many edges for vertex count.");
         }
 
-        DefaultDirectedGraph<Long, DefaultEdge> dag = new DefaultDirectedGraph<Long, DefaultEdge>(DefaultEdge.class);
-        for (long i = 0; i < vertices; i++) {
+        long startVertex = dag.vertexSet().size();
+        long startEdge = dag.edgeSet().size();
+        long additionalVertices = vertices - dag.vertexSet().size();
+        long additionalEdges = edges - dag.edgeSet().size();
+
+        // TODO alex break this into separate vertices and edges checks
+        if(additionalEdges < 0 || additionalVertices < 0){
+            // create brand new graph
+            // TODO alex could just remove all edges (empty the set in a single operation?)
+            // TODO alex or just calculate number of edges to add / remove
+            dag = new DefaultDirectedGraph<>(DefaultEdge.class);
+            startVertex = 0;
+            startEdge = 0;
+        }
+
+        // TODO alex could just calculate the vertices to add / remove instead of starting from empty
+        for (long i = startVertex; i < vertices; i++) {
             dag.addVertex(i);
         }
 
-        // if we want a nearly "full" graph, randomly remove edges rather than randomly add them
-        if ((long) edges > 3 * maxEdges / 4) {
-            // add every possible edge
-            for (long i = vertices - 1; i > 0; i--) {
-                for (long j = i - 1; j >= 0; j--) {
-                    dag.addEdge(i, j);
-                }
-            }
-
-            long count = maxEdges;
-            while (count > edges) {
-                long start = (long) (Math.random() * vertices);
-                long end = (long) (Math.random() * (start - 1));
-                if (dag.removeEdge(start, end) != null) {
-                    count--;
-                }
-            }
-        } else {
-            long count = 0;
-            while (count < edges) {
-                long start = (long) (Math.random() * vertices);
-                long end = (long) (Math.random() * (start - 1));
-                if (start == end || dag.containsEdge(start, end)) {
-                    continue;
-                } else {
-                    dag.addEdge(start, end);
-                    count++;
-                }
+        long count = startEdge;
+        while (count < edges) {
+            long start = (long) (Math.random() * vertices);
+            long end = (long) (Math.random() * start);
+            if (start == end || dag.containsEdge(start, end)) {
+                continue;
+            } else {
+                dag.addEdge(start, end);
+                count++;
             }
         }
-
-        return dag;
     }
 
     // TODO alex add appendix with some examples of small graphs that are properly topologically sorted
