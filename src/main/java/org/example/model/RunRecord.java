@@ -1,8 +1,5 @@
 package org.example.model;
 
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-
 public class RunRecord {
 
     private RunType type;
@@ -10,7 +7,8 @@ public class RunRecord {
     private long vertexCount;
     private long edgeCount;
 
-    public RunRecord(RunType type, long timeCount, DefaultDirectedGraph<Long, DefaultEdge> dag) {
+    // TODO alex convert to RunRecordManager and privatize the RunRecord as a Java 14 Record
+    public RunRecord(RunType type, long timeCount, Graph dag) {
         this.type = type;
         this.timeCount = timeCount / 1_000_000; // milliseconds
         this.vertexCount = dag.vertexSet().size();

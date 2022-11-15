@@ -1,8 +1,7 @@
 package org.example.sorting;
 
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
+import org.example.model.Graph;
 
 public interface TopologicalSort {
-    Long[] sort(DefaultDirectedGraph<Long, DefaultEdge> dag);
+    Long[] sort(Graph dag);
 }

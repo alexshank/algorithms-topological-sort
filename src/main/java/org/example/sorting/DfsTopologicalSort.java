@@ -1,8 +1,7 @@
 package org.example.sorting;
 
+import org.example.model.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,7 +11,7 @@ import java.util.Stack;
 
 public class DfsTopologicalSort implements TopologicalSort {
 
-    public Long[] sort(DefaultDirectedGraph<Long, DefaultEdge> graph) {
+    public Long[] sort(Graph graph) {
         Set<Long> visited = new HashSet<>();
         Stack<Long> stack = new Stack<>();
 
@@ -32,7 +31,7 @@ public class DfsTopologicalSort implements TopologicalSort {
     }
 
     // TODO alex figure out why this is so slow (probably traversing edges way too many times)
-    public static List<Long> mySimpleTopologicalSort(DefaultDirectedGraph<Long, DefaultEdge> graph) {
+    public static List<Long> mySimpleTopologicalSort(Graph graph) {
         List<Long> result = new ArrayList<>();
         while (!graph.vertexSet().isEmpty()) {
             for (long j : graph.vertexSet()) {
@@ -47,7 +46,7 @@ public class DfsTopologicalSort implements TopologicalSort {
     }
 
     private static void topologicalSortVisit(
-            DefaultDirectedGraph<Long, DefaultEdge> graph,
+            Graph graph,
             Stack<Long> stack,
             Set<Long> visited,
             long v

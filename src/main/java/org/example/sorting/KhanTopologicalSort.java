@@ -1,15 +1,14 @@
 package org.example.sorting;
 
+import org.example.model.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
 
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class KhanTopologicalSort implements TopologicalSort {
 
-    public Long[] sort(DefaultDirectedGraph<Long, DefaultEdge> graph) {
+    public Long[] sort(Graph graph) {
         Queue<Long> queue = new PriorityQueue<>();
         int visitedCount = 0;
 

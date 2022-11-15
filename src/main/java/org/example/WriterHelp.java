@@ -3,9 +3,9 @@ package org.example;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.util.mxCellRenderer;
+import org.example.model.Graph;
 import org.example.model.RunRecord;
 import org.jgrapht.ext.JGraphXAdapter;
-import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import javax.imageio.ImageIO;
@@ -39,7 +39,7 @@ public class WriterHelp {
 
     // write a PNG of the given graph to the given file in the "output" directory
     private static void writeGraphToFile(
-            DefaultDirectedGraph<Long, DefaultEdge> graph,
+            Graph graph,
             String fileName
     ) throws IOException {
         JGraphXAdapter<Long, DefaultEdge> graphAdapter = new JGraphXAdapter<Long, DefaultEdge>(graph);
