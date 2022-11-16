@@ -25,27 +25,53 @@ def time_and_sum(local_data, case):
 
 if __name__ == "__main__":
 
-    # data = None
-    # with open('output/many_edges_data.csv', 'r') as csvfile:
-    #     data = csv.reader(csvfile, delimiter = ',')
-    #     data = list(data)
+    # complete data frame
+    df = pandas.read_csv('output/latest_data.csv')
+    df['N'] = df['vertexCount'] + df['edgeCount']
 
-    data = pandas.read_csv('output/many_edges_data.csv')
+    # only library rows
+    dfs_df = df.copy(deep=True)
+    dfs_df = dfs_df[dfs_df['type'] == 'DFS']
+    print(dfs_df.head)
+
+    # unique pairs of vertices and edges
+    edge_vertex_df = dfs_df.copy(deep=True)
+    edge_vertex_df = edge_vertex_df[['vertexCount', 'edgeCount', 'N']].drop_duplicates()
+    print(edge_vertex_df.head)
+
+    for _, row in edge_vertex_df.iterrows():
+        temp_df = dfs_df[dfs_df['vertexCount'] == row['vertexCount']]
+        # print(temp_df.head)
+        # print('v = ' + str(row['vertexCount']) + ', e = ' + str(row['edgeCount']) + ', N = ' + str(row['N']) + ', mean = ' + str(temp_df['timeCount'].mean()))
+        print(str(row['vertexCount']) + ', ' + str(row['edgeCount']) + ', ' + str(temp_df['timeCount'].mean()))
+
+    # unique N
+    N_df = dfs_df.copy(deep=True)
+    N_df = N_df[['N']].drop_duplicates()
+    print(N_df.head)
+
+    for _, row in N_df.iterrows():
+        temp_df = dfs_df[dfs_df['N'] == row['N']]
+        # print(temp_df.head)
+        # print('v = ' + str(row['vertexCount']) + ', e = ' + str(row['edgeCount']) + ', N = ' + str(row['N']) + ', mean = ' + str(temp_df['timeCount'].mean()))
+        print(str(temp_df['timeCount'].mean()))
+
+
+
+    # data = data.query("type == 'Library'")
     # print(data.head)
-    data = data.query("type == 'Library'")
-    print(data.head)
-    row_count = data.shape[0]
-    # print(row_count)
-    print(data['actualVertexCount'])
-    print([data.at[int((row_count - 1) / i), 'actualVertexCount'] for i in reversed(range(1,5))])
-    print([data.at[int((row_count - 1) / i), 'actualEdgeCount'] for i in reversed(range(1,5))])
+    # row_count = data.shape[0]
+    # # print(row_count)
+    # print(data['actualVertexCount'])
+    # print([data.at[int((row_count - 1) / i), 'actualVertexCount'] for i in reversed(range(1,5))])
+    # print([data.at[int((row_count - 1) / i), 'actualEdgeCount'] for i in reversed(range(1,5))])
 # test_edges = [data['actualVertexCount'][int(row_count / i) - 10] for i in range(1, 4)]
     # pull 4 vertices
     # print(test_edges)
 
 
-    plt.imshow(a, cmap='hot', interpolation='nearest')
-    plt.show()
+    # plt.imshow(a, cmap='hot', interpolation='nearest')
+    # plt.show()
 
 
     # TODO add a column to data frame with all the linear fit metrics (may have to be separate data frame?
