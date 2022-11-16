@@ -38,9 +38,10 @@ public class WriterHelp {
         }
     }
 
+    // TODO update to take in file pointer, move to custom Graph class
     // write a PNG of the given graph to the given file in the "output" directory
     private static void writeGraphToFile(Graph graph, String fileName) {
-        JGraphXAdapter<Long, DefaultEdge> graphAdapter = new JGraphXAdapter<Long, DefaultEdge>(graph);
+        JGraphXAdapter<Long, DefaultEdge> graphAdapter = new JGraphXAdapter<>(graph);
         // we don't need edge labels on our graph
         graphAdapter.getEdgeToCellMap().forEach((edge, cell) -> cell.setValue(null));
 

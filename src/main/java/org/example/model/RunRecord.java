@@ -3,12 +3,12 @@ package org.example.model;
 public class RunRecord {
 
     private int runNumber;
-    private RunType type;
+    private SortType type;
     private long timeCount; // milliseconds
     private long vertexCount;
     private long edgeCount;
 
-    public RunRecord(int runNumber, RunType type, long timeCount, Graph dag) {
+    public RunRecord(int runNumber, SortType type, long timeCount, Graph dag) {
         this.runNumber = runNumber;
         this.type = type;
         this.timeCount = timeCount / 1_000_000; // milliseconds

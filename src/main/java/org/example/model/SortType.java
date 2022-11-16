@@ -1,6 +1,6 @@
 package org.example.model;
 
-public enum RunType {
+public enum SortType {
     LIBRARY,
     DFS,
     KHAN

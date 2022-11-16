@@ -11,12 +11,12 @@ public class RunRecordManager {
 
     public RunRecordManager() {}
 
-    public void addRecord(RunType runType, long elapsedTime, Graph dag){
-        this.runRecords.add(new RunRecord(runRecords.size(), runType, elapsedTime, dag));
+    public void addRecord(SortType sortType, long elapsedTime, Graph dag){
+        this.runRecords.add(new RunRecord(runRecords.size(), sortType, elapsedTime, dag));
     }
 
     public static String getHeaderRow(){
-        return "runNumber, type,timeCount,vertexCount,edgeCount";
+        return "runNumber,type,timeCount,vertexCount,edgeCount";
     }
 
     public void printRunRecords(){
@@ -28,6 +28,6 @@ public class RunRecordManager {
     }
 
     public void writeRecordsToCsv(){
-        WriterHelp.writeRecordsToCsv(runRecords, "many_edges_data_01.csv");
+        WriterHelp.writeRecordsToCsv(runRecords, "latest_data.csv");
     }
 }
