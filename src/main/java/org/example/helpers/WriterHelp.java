@@ -1,4 +1,4 @@
-package org.example;
+package org.example.helpers;
 
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxIGraphLayout;
