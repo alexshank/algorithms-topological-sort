@@ -28,18 +28,14 @@ public class DfsTopologicalSort implements TopologicalSort {
         return result;
     }
 
-    private static void topologicalSortVisit(
-            Graph graph,
-            Stack<Long> stack,
-            Set<Long> visited,
-            long v
-    ) {
+    private static void topologicalSortVisit(Graph graph, Stack<Long> stack, Set<Long> visited, long v) {
         visited.add(v);
         Graphs.successorListOf(graph, v).forEach(child -> {
             if (!visited.contains(child)) {
                 topologicalSortVisit(graph, stack, visited, child);
             }
         });
+        // vertices are added to the stack based on their finishing times
         stack.push(v);
     }
 }

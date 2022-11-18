@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     # only library rows
     dfs_df = df.copy(deep=True)
-    dfs_df = dfs_df[dfs_df['type'] == 'DFS']
+    dfs_df = dfs_df[dfs_df['type'] == 'LIBRARY']
     print(dfs_df.head)
 
     # unique pairs of vertices and edges
